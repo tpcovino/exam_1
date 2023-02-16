@@ -1,0 +1,251 @@
+---
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+---
+
+# Exam 1 (50 pts)
+
+In this project you are going to work with streamflow data from 4 USGS gauges. One in Florida, one in Vermont, one in Arizona, and one in Montana. I have done the downloading and df shaping for you. The two files you will need to load from the repo are "flow.csv" and "gauge_info.csv". I have left the code that I used to download and shape these dfs in this .Rmd for your own information on how I would do that. It is all commented out. 
+
+You are then going to apply the skills we have learned in Units 1-4 of Watershed Analysis to make graphs of data, compute statistical metrics of the data, plot various statistical distributions, calculate flow metrics, determine yields (e.g., mm per year), and make some data-driven conclusions about the hydrology and climate at each site.  
+
+Show all of your code and comment it. If you comment what you are trying to do you will likely receive some credit even if the code doesn't ultimately work. 
+
+Similar to labs you will knit and submit a .Rmd and .html on D2L.
+
+## To start load some packages.
+```{r}
+library(tidyverse)
+library(dataRetrieval)
+library(lubridate)
+library(leaflet)
+library(knitr) # for making a table in RMarkdown
+library(plotly)
+library(patchwork)
+```
+
+## I will write the first few chunks of code to get you started. 
+
+First, define parameters for your data download. 
+```{r}
+param_cd <- "00060"
+service_cd <- "dv"
+start <- as.Date("1990-10-01")
+end <- as.Date("2022-10-01")
+sites <- c("02270500", "04282000", "06019500", "09402000") # you can google these gauges to see what they are. The dataRetrieval package will also give you information on them. 
+```
+
+Then, use dataRetrieval to get information on the gauges. I have commented this out, it is here just for your information. This will allow this .Rmd to knit.
+```{r}
+#gauge_drain <- readNWISsite(site = sites) %>% 
+  #select(site_no, station_nm, dec_lat_va, dec_long_va, drain_area_va)
+
+#gauge_time <- whatNWISdata(site = sites, parameterCd = "00060", service = "dv") %>% 
+  #select(site_no, begin_date, end_date, count_nu)
+
+#gauge_info <- left_join(gauge_drain, gauge_time, by = "site_no")
+
+#write_csv(gauge_info, "gauge_info.csv")
+gauge_info <- read_csv("gauge_info.csv")
+```
+
+## Problem 1 (5 pts)
+
+### Make a map that shows the location of the 4 gauges. Have the label be the gauge name and the popup the drainage area (3 pts in Problem 1). 
+
+```{r}
+
+```
+
+### Also make a table that only has site_no, station_nm, dec_lat_va, dec_long_va, and drain_area_va for the 4 gauges (2 pts in Problem 1). 
+
+- Making a table in RMarkdown is very simple. See here <https://rmarkdown.rstudio.com/lesson-7.html>
+
+
+I have started the table for you here. Complete the select function to generate the appropriate df to feed into the kable() argument.
+```{r}
+gauge_table <- gauge_info %>% 
+  select(site_no) # You need to complete this section 
+
+table_1 <- kable(gauge_table, caption = "Table 1. Name, location, and drainage area for gauges used in this project.")
+
+table_1
+```
+
+## Problem 2 (5 pts)
+
+Download Q for the gauges and add the station name and the drainage area to the flow df. Similar to the gauge_info chunk, I will provide the code for you. I have left the code here for your information. This will allow this .Rmd to knit. 
+```{r}
+#flow <- readNWISdata(sites = sites, parameterCd = param_cd, service = service_cd, startDate = start, endDate = end) %>% 
+  #renameNWISColumns() %>% 
+  #select(site_no, date = dateTime, flow_cfs = Flow)
+
+#flow <- left_join(flow, gauge_info, by = "site_no") 
+
+#flow <- flow %>% 
+  #select(station_nm, site_no, date, flow_cfs, drain_area_va)
+
+#write_csv(flow, "flow.csv")
+flow <- read_csv("flow.csv")
+
+```
+
+Look at the str() of your flow df to familiarize yourself with the structure of the df. 
+
+```{r}
+str(flow)
+```
+
+### (1.5 pt in Problem 2) 
+Now, make a plot of flow and color by station_nm. 
+```{r}
+
+  
+```
+
+### (1.5 pt in Problem 2) 
+Next, make a facet wrap of flow at the 4 gauges. Color by station_nm and facet by site_no.  
+```{r}
+
+
+
+```
+
+### (2 pts in Problem 2) 
+Make a brief comment on your visual assessment of the data. Are there any particularly large or small values? Do there appear to be any trends or cycles evident in the data? 
+
+
+## Problem 3 (5 pts)
+
+### Now, let's look at the statistical distributions of flow at the 4 gauges. Start by making a density plot. Put discharge on the x-axis and density on the y. Make the fill = station_nm, set the alpha to 0.5, log the x-axis, and label the axes appropriately (1 pt in Problem 3). 
+
+```{r}
+
+
+```
+
+### Now make the figure above as a facet_wrap. Keep fill = station_nm, but facet by site_no (1 pt in Problem 3).
+```{r}
+
+
+```
+
+### Briefly comment on your visual assessment of the PDFs. Which has the broadest and which has the most narrow based on your visual assement (1pt in Problem 3)?
+
+### Calculate the mean, median, max, min, range, sd, and cv for each gauge. Put those values into table 2. Table 2 should have: site_no, station_nm, mean_flow, median_flow, max_flow, min_flow, range_flow, sd_flow, and cv_flow. This requires group_by and summarize (2 pts in Problem 3).
+
+```{r}
+stats_table <- flow %>% 
+  group_by() %>% 
+  summarize()
+
+table_2 <- kable(stats_table, caption = "Table 2. Flow statistics for the 4 gauges used in this project")
+
+table_2
+```
+
+## Synthesis question 1 (5 pts)
+Which site has the highest median flow?
+Which site has the lowest median flow?
+Which site has the highest max flow?
+Describe why two sites with similar flow range values can have very different CV values. Refer to the table you have just created to demonstrate. 
+
+## Problem 4 (5 pts)
+
+### Let's now make some calculations at the annual scale. First let's simply find the maximum flow for each year at each gauge. We have done something similar in lab 3. Hint: This will require lubridate, group_by, and summarize. But we are not yet calculating annual totals, just finding the max flow per year (1.5 pts in Problem 4). 
+
+```{r}
+max_flow <- flow %>% 
+  mutate() %>% 
+  group_by() %>% 
+  summarize()
+```
+
+### Next make an interactive plotly facet_wrap figure of max flow per year at each gauge (1.5 pts in Problem 4). 
+
+```{r}
+
+
+```
+
+### The Arizona and Vermont gauges each have one year in the data record that has a max value well above the rest. Determine and report here what those years are at each of those two gauges (1 pt in Problem 4).
+
+Now, make 2 new dfs one for AZ and one for VT that contains daily flow for the years in which the abnormally high values at those gauges occurred. Use lubridate to create a year column and filter by gauge and year.  
+
+```{r}
+AZ <- flow %>% 
+  mutate() %>% 
+  filter() 
+
+VT <- flow %>% 
+  mutate() %>% 
+  filter() 
+```
+
+### Then use patchwork and ggplotly to make two figures of flows from those two gauges during those abnormally high years and determine the months of those high flow occurences (1 pt in Problem 4). 
+```{r}
+
+
+```
+
+## Synethesis question 2 (5 pts) 
+Once you have determined the month of year of these abnormally high flows, do a brief internet search to see what may have cuased this. What did you find? 
+
+## Problem 5 (10 pts)
+
+Now use the "flow" df make a new df called "flow_mm" where you calculate area normalized flows in mm/day. 
+
+```{r}
+
+
+```
+
+### Using the mm/day flow data (i.e., flow_mm), recalculate the statistical metrics from table 2: mean, median, max, min, range, sd, and cv for each gauge. Put those values into table 3. Table 3 should have: site_no, station_nm, mean_flow, median_flow, max_flow, min_flow, range_flow, sd_flow, and cv_flow (2.5 pts in Problem 5).
+
+```{r}
+mm_table <- flow_mm %>% 
+  group_by() %>% 
+  summarize()
+
+table_3 <- kable(mm_table, caption = "Table 3. Flow statistics for the 4 gauges used in this project in terms of mm/day.")
+
+table_3
+```
+
+## Synthesis question 3 (5 pts)
+How do the median, range, sd, and cv that you calculated in table 2 compare to those in you have just calculated in table 3? Specifically, comment on which have changed and which have not. 
+
+
+### From the flow_mm data frame you have created above, make a facet_wrap of area normalized flows in mm/day. Color by station_nm and facet by site_no. Label axes appropriately (2.5 pts in Problem 5). 
+```{r}
+
+```
+
+### Using table 3 and the facet_wrap figure you just created determine which watershed produces the most, and which produces the least, water per unit area (2.5 pts in Problem 5).
+
+For the final analysis, use group_by and summarize to calculate total annual flows in mm/year at each gauge. You will use the flow_mm df and will create a new df called flow_mm_an.
+
+```{r}
+flow_mm_an <- flow_mm %>% 
+  mutate() %>% 
+  group_by() %>% 
+  summarize()
+```
+
+Using your flow_mm_an df, plot the total annual flow in mm/year on one figure and color by station_nm. Log the y axis and label axes appropriately (2.5 pts in Problem 5). 
+
+```{r}
+
+  
+```
+
+## Synthesis question 4 (summary - 5 pts)
+
+When evaluating flows using volumetric vs. area normalized flows we see vast differences in the hydrology at the 4 gauges. Using your full analysis, briefly comment on the climatic and hydrologic processes (e.g., drainage area and runoff generation processes) that might be driving these differences.  
+
+
+
+
